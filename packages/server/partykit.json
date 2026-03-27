@@ -1,8 +1,0 @@
-{
-  "name": "uno-online",
-  "main": "src/game-room.ts",
-  "parties": {
-    "matchmaking": "src/matchmaking.ts"
-  },
-  "compatibilityDate": "2025-06-01"
-}

@@ -1,49 +1,69 @@
 import { useEffect, useRef, useCallback } from 'react'
-import PartySocket from 'partysocket'
 import type { ClientMessage, ServerMessage } from '@uno/shared'
 import { useGameStore } from '../stores/game-store'
 
-const PARTYKIT_HOST = import.meta.env.VITE_PARTYKIT_HOST || 'localhost:1999'
+const WS_HOST = import.meta.env.VITE_WS_HOST || 'localhost:1999'
+
+function getWsUrl(roomCode: string): string {
+  const protocol = WS_HOST.includes('localhost') ? 'ws' : 'wss'
+  return `${protocol}://${WS_HOST}/ws/${roomCode}`
+}
 
 export function useGameSocket(roomCode: string | undefined) {
-  const socketRef = useRef<PartySocket | null>(null)
+  const socketRef = useRef<WebSocket | null>(null)
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { setConnected, handleServerMessage } = useGameStore()
 
   useEffect(() => {
     if (!roomCode) return
 
-    const socket = new PartySocket({
-      host: PARTYKIT_HOST,
-      room: roomCode,
-    })
+    let closed = false
 
-    socket.addEventListener('open', () => {
-      setConnected(true)
-      // If we have a stored player ID, attempt to rejoin
-      const myPlayerId = useGameStore.getState().myPlayerId
-      if (myPlayerId) {
-        const nickname = localStorage.getItem('uno-nickname') || 'Player'
-        socket.send(JSON.stringify({ type: 'join', nickname }))
-      }
-    })
+    function connect() {
+      if (closed) return
 
-    socket.addEventListener('message', (event) => {
-      try {
-        const msg: ServerMessage = JSON.parse(event.data)
-        handleServerMessage(msg)
-      } catch {
-        console.error('Failed to parse server message:', event.data)
-      }
-    })
+      const socket = new WebSocket(getWsUrl(roomCode!))
 
-    socket.addEventListener('close', () => {
-      setConnected(false)
-    })
+      socket.addEventListener('open', () => {
+        setConnected(true)
+        // If we have a stored player ID, attempt to rejoin
+        const myPlayerId = useGameStore.getState().myPlayerId
+        if (myPlayerId) {
+          const nickname = localStorage.getItem('uno-nickname') || 'Player'
+          socket.send(JSON.stringify({ type: 'join', nickname }))
+        }
+      })
 
-    socketRef.current = socket
+      socket.addEventListener('message', (event) => {
+        try {
+          const msg: ServerMessage = JSON.parse(event.data)
+          handleServerMessage(msg)
+        } catch {
+          console.error('Failed to parse server message:', event.data)
+        }
+      })
+
+      socket.addEventListener('close', () => {
+        setConnected(false)
+        // Auto-reconnect after 2 seconds
+        if (!closed) {
+          reconnectTimer.current = setTimeout(connect, 2000)
+        }
+      })
+
+      socket.addEventListener('error', () => {
+        socket.close()
+      })
+
+      socketRef.current = socket
+    }
+
+    connect()
 
     return () => {
-      socket.close()
+      closed = true
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current)
+      socketRef.current?.close()
       socketRef.current = null
     }
   }, [roomCode, setConnected, handleServerMessage])

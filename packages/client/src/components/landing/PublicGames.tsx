@@ -9,7 +9,7 @@ interface PublicGame {
   maxPlayers: number
 }
 
-const PARTYKIT_HOST = import.meta.env.VITE_PARTYKIT_HOST || 'localhost:1999'
+const WS_HOST = import.meta.env.VITE_WS_HOST || 'localhost:1999'
 
 export function PublicGames() {
   const [games, setGames] = useState<PublicGame[]>([])
@@ -19,8 +19,8 @@ export function PublicGames() {
   const fetchGames = async () => {
     setLoading(true)
     try {
-      const protocol = PARTYKIT_HOST.includes('localhost') ? 'http' : 'https'
-      const res = await fetch(`${protocol}://${PARTYKIT_HOST}/parties/matchmaking/public`)
+      const protocol = WS_HOST.includes('localhost') ? 'http' : 'https'
+      const res = await fetch(`${protocol}://${WS_HOST}/api/public-games`)
       const data = await res.json()
       setGames(data.games || [])
     } catch {

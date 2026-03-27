@@ -14,9 +14,7 @@
     "build": "npm run build -w @uno/shared && npm run build -w @uno/gamemodes && npm run build -w @uno/server && npm run build -w @uno/client",
     "typecheck": "tsc --build",
     "lint": "eslint packages/*/src",
-    "deploy:server": "npm run deploy -w @uno/server",
-    "deploy:client": "vercel --prod",
-    "deploy": "npm run deploy:server && npm run deploy:client"
+    "deploy:client": "vercel --prod"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",
