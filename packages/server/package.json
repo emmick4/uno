@@ -1,0 +1,17 @@
+{
+  "name": "@uno/server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "partykit dev --port 1999",
+    "build": "tsc",
+    "deploy": "partykit deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@uno/shared": "*",
+    "@uno/gamemodes": "*",
+    "partykit": "^0.0.111"
+  }
+}
