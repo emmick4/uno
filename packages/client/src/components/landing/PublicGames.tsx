@@ -19,7 +19,8 @@ export function PublicGames() {
   const fetchGames = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`http://${PARTYKIT_HOST}/parties/matchmaking/public`)
+      const protocol = PARTYKIT_HOST.includes('localhost') ? 'http' : 'https'
+      const res = await fetch(`${protocol}://${PARTYKIT_HOST}/parties/matchmaking/public`)
       const data = await res.json()
       setGames(data.games || [])
     } catch {

@@ -15,7 +15,6 @@ export function useGameSocket(roomCode: string | undefined) {
     const socket = new PartySocket({
       host: PARTYKIT_HOST,
       room: roomCode,
-      party: 'main',
     })
 
     socket.addEventListener('open', () => {
