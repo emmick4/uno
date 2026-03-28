@@ -17,7 +17,8 @@ COPY packages/gamemodes/ packages/gamemodes/
 COPY packages/server/ packages/server/
 COPY tsconfig.base.json tsconfig.json ./
 
-# Run
+# Run as non-root
+USER bun
 ENV PORT=8080
 EXPOSE 8080
 CMD ["bun", "run", "packages/server/src/index.ts"]
