@@ -99,6 +99,9 @@ class RoomManager {
       case 'join':
         this.handleJoin(ws, room, roomCode, msg.nickname, msg.playerId)
         break
+      case 'updateNickname':
+        this.handleUpdateNickname(ws, room, msg.nickname)
+        break
       case 'updateSettings':
         this.handleUpdateSettings(ws, room, msg.settings)
         break
@@ -250,6 +253,20 @@ class RoomManager {
     this.sendTo(ws, { type: 'welcome', playerId })
     this.broadcastLobbyState(roomCode, room)
     this.broadcast(room, { type: 'playerJoined', player })
+  }
+
+  private handleUpdateNickname(
+    ws: ServerWebSocket<ConnectionData>,
+    room: RoomState,
+    nickname: string,
+  ) {
+    const sanitized = nickname.slice(0, 20).trim() || 'Player'
+    const player = room.players.find((p) => p.id === ws.data.playerId)
+    if (!player) return
+
+    player.nickname = sanitized
+    ws.data.nickname = sanitized
+    this.broadcastLobbyState(ws.data.roomCode, room)
   }
 
   private handleUpdateSettings(

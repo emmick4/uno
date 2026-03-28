@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router'
 import { useGameSocket } from '../hooks/useGameSocket'
 import { useGameStore } from '../stores/game-store'
@@ -61,6 +61,16 @@ export function LobbyScreen() {
     send({ type: 'startGame' })
   }
 
+  const [codeCopied, setCodeCopied] = useState(false)
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/lobby/${roomCode}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCodeCopied(true)
+      setTimeout(() => setCodeCopied(false), 2000)
+    })
+  }
+
   const handleLeave = () => {
     send({ type: 'leave' })
     useGameStore.getState().reset()
@@ -77,10 +87,15 @@ export function LobbyScreen() {
       {/* Room code */}
       <div className="text-center">
         <div className="text-sm text-gray-500 uppercase tracking-wider mb-1">Room Code</div>
-        <div className="text-5xl font-mono tracking-[0.5em] bg-gray-800 px-8 py-4 rounded-xl select-all cursor-pointer">
+        <div
+          onClick={handleCopyLink}
+          className="text-5xl font-mono tracking-[0.5em] bg-gray-800 px-8 py-4 rounded-xl cursor-pointer hover:bg-gray-700 transition-colors"
+        >
           {roomCode}
         </div>
-        <div className="text-xs text-gray-600 mt-2">Share this code with friends to join</div>
+        <div className="text-xs text-gray-600 mt-2">
+          {codeCopied ? <span className="text-green-400">Link copied!</span> : 'Click to copy invite link'}
+        </div>
       </div>
 
       <div className="flex gap-8 items-start">
@@ -101,6 +116,7 @@ export function LobbyScreen() {
                   seatIndex={i}
                   isMe={player?.id === myPlayerId}
                   isHost={player?.isHost || false}
+                  onUpdateNickname={(nickname) => send({ type: 'updateNickname', nickname })}
                 />
               </div>
             )

@@ -60,7 +60,7 @@ const server = Bun.serve<ConnectionData>({
               'Content-Type': 'application/strategic-merge-patch+json',
             },
             body: patchBody,
-            // @ts-expect-error Bun supports this for self-signed certs
+            // @ts-ignore Bun supports this for self-signed certs
             tls: { rejectUnauthorized: false },
           },
         )

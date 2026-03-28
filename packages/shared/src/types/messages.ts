@@ -7,6 +7,7 @@ import type { GameSettings, LobbyPlayer } from './lobby'
 export type ClientMessage =
   // Lobby
   | { type: 'join'; nickname: string; playerId?: string }
+  | { type: 'updateNickname'; nickname: string }
   | { type: 'updateSettings'; settings: Partial<GameSettings> }
   | { type: 'startGame' }
   | { type: 'kick'; playerId: string }
