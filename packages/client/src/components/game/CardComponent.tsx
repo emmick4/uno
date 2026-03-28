@@ -51,29 +51,36 @@ export function CardComponent({
   const display = VALUE_DISPLAY[card.value] || card.value
 
   return (
-    <motion.button
-      layoutId={layoutId}
+    <button
       onClick={onClick}
       disabled={!onClick}
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.8, opacity: 0, y: -50 }}
-      whileHover={isPlayable ? { y: -12, scale: 1.05 } : undefined}
-      whileTap={isPlayable ? { scale: 0.95 } : undefined}
-      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
       className={`
-        ${SIZE_CLASSES[size]} ${colors.bg} border-2 ${colors.border} ${colors.text}
-        flex flex-col items-center justify-center font-bold
-        select-none
-        ${isPlayable ? 'cursor-pointer shadow-lg hover:shadow-white/20' : ''}
-        ${!isPlayable && onClick ? 'opacity-60 cursor-not-allowed' : ''}
+        ${isPlayable ? 'cursor-pointer' : ''}
+        ${!isPlayable && onClick ? 'cursor-not-allowed' : ''}
         ${!onClick ? 'cursor-default' : ''}
       `}
     >
-      <span className="text-[10px] self-start ml-1">{display}</span>
-      <span className={size === 'sm' ? 'text-lg' : 'text-2xl'}>{display}</span>
-      <span className="text-[10px] self-end mr-1 rotate-180">{display}</span>
-    </motion.button>
+      <motion.div
+        layoutId={layoutId}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0, y: -50 }}
+        whileHover={isPlayable ? { y: -12, scale: 1.05 } : undefined}
+        whileTap={isPlayable ? { scale: 0.95 } : undefined}
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        className={`
+          ${SIZE_CLASSES[size]} ${colors.bg} border-2 ${colors.border} ${colors.text}
+          flex flex-col items-center justify-center font-bold
+          select-none
+          ${isPlayable ? 'shadow-lg hover:shadow-white/20' : ''}
+          ${!isPlayable && onClick ? 'opacity-60' : ''}
+        `}
+      >
+        <span className="text-[10px] self-start ml-1">{display}</span>
+        <span className={size === 'sm' ? 'text-lg' : 'text-2xl'}>{display}</span>
+        <span className="text-[10px] self-end mr-1 rotate-180">{display}</span>
+      </motion.div>
+    </button>
   )
 }
 
