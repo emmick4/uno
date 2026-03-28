@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: emmick4/uno-server
 
 jobs:
-  build-server:
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,17 +33,8 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-  deploy-k8s:
-    needs: build-server
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
       - name: Trigger rollout restart
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.K8S_SSH_HOST }}
-          username: ${{ secrets.K8S_SSH_USER }}
-          key: ${{ secrets.K8S_SSH_KEY }}
-          script: |
-            kubectl rollout restart deployment/uno-server -n uno
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.DEPLOY_WEBHOOK_TOKEN }}" \
+            https://uno-ws.ryanemmick.com/webhook/deploy

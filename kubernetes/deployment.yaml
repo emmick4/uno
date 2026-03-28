@@ -18,6 +18,7 @@ spec:
         runAsUser: 1000
         seccompProfile:
           type: RuntimeDefault
+      serviceAccountName: deploy-webhook
       containers:
         - name: uno-server
           image: ghcr.io/emmick4/uno-server:latest
@@ -32,6 +33,11 @@ spec:
           env:
             - name: PORT
               value: "8080"
+            - name: DEPLOY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: deploy-webhook-token
+                  key: token
           readinessProbe:
             httpGet:
               path: /health
