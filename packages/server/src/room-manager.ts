@@ -30,6 +30,12 @@ export interface ConnectionData {
   roomCode: string
 }
 
+// ─── Timeout Constants ────────────────────────────────────
+const IDLE_TIMEOUT_MS = 30 * 60_000       // 30 min no messages → close room
+const MAX_GAME_DURATION_MS = 2 * 60 * 60_000 // 2 hr hard cap per game
+const LOBBY_TIMEOUT_MS = 15 * 60_000      // 15 min lobby without starting → close
+const REAP_INTERVAL_MS = 60_000           // check every 60s
+
 interface RoomState {
   phase: 'lobby' | 'playing' | 'finished'
   hostId: string
@@ -38,14 +44,51 @@ interface RoomState {
   connections: Set<ServerWebSocket<ConnectionData>>
   gameState: GameState | null
   turnTimer: ReturnType<typeof setTimeout> | null
+  lastActivityAt: number
+  createdAt: number
 }
 
 class RoomManager {
   rooms = new Map<string, RoomState>()
+  private reapTimer: ReturnType<typeof setInterval> | null = null
+
+  constructor() {
+    this.reapTimer = setInterval(() => this.reapStaleRooms(), REAP_INTERVAL_MS)
+  }
+
+  private reapStaleRooms() {
+    const now = Date.now()
+    for (const [roomCode, room] of this.rooms) {
+      let reason: string | null = null
+
+      if (now - room.lastActivityAt > IDLE_TIMEOUT_MS) {
+        reason = 'idle timeout'
+      } else if (room.phase === 'lobby' && now - room.createdAt > LOBBY_TIMEOUT_MS) {
+        reason = 'lobby timeout'
+      } else if (room.phase === 'playing' && room.gameState && now - room.createdAt > MAX_GAME_DURATION_MS) {
+        reason = 'max game duration'
+      }
+
+      if (reason) {
+        console.log(`Reaping room ${roomCode}: ${reason}`)
+        this.closeRoom(roomCode, room)
+      }
+    }
+  }
+
+  private closeRoom(roomCode: string, room: RoomState) {
+    if (room.turnTimer) clearTimeout(room.turnTimer)
+    this.broadcast(room, { type: 'error', code: 'ROOM_CLOSED', message: 'Room closed due to inactivity' })
+    for (const conn of room.connections) {
+      try { conn.close() } catch {}
+    }
+    this.rooms.delete(roomCode)
+  }
 
   getOrCreateRoom(roomCode: string): RoomState {
     let room = this.rooms.get(roomCode)
     if (!room) {
+      const now = Date.now()
       room = {
         phase: 'lobby',
         hostId: '',
@@ -54,6 +97,8 @@ class RoomManager {
         connections: new Set(),
         gameState: null,
         turnTimer: null,
+        lastActivityAt: now,
+        createdAt: now,
       }
       this.rooms.set(roomCode, room)
     }
@@ -94,6 +139,8 @@ class RoomManager {
       this.sendTo(ws, { type: 'error', code: 'ROOM_NOT_FOUND', message: 'Room not found' })
       return
     }
+
+    room.lastActivityAt = Date.now()
 
     switch (msg.type) {
       case 'join':
