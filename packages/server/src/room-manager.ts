@@ -530,17 +530,21 @@ class RoomManager {
     if (!room.gameState || room.gameState.turnTimeLimit <= 0) return
 
     room.turnTimer = setTimeout(() => {
-      if (!room.gameState || room.gameState.phase !== 'playing') return
+      try {
+        if (!room.gameState || room.gameState.phase !== 'playing') return
 
-      const gamemode = getGamemode(room.gameState.gamemode)
-      const currentPlayer = room.gameState.players[room.gameState.currentPlayerIndex]
-      const result = handleTurnTimeout(room.gameState, gamemode)
+        const gamemode = getGamemode(room.gameState.gamemode)
+        const currentPlayer = room.gameState.players[room.gameState.currentPlayerIndex]
+        const result = handleTurnTimeout(room.gameState, gamemode)
 
-      this.broadcast(room, { type: 'cardDrawn', playerId: currentPlayer.id, count: result.drawnCards.length })
-      this.broadcastGameState(room)
-
-      if (room.gameState.phase === 'playing') {
-        this.setTurnTimer(room)
+        this.broadcast(room, { type: 'cardDrawn', playerId: currentPlayer.id, count: result.drawnCards.length })
+        this.broadcastGameState(room)
+      } catch (err) {
+        console.error('Turn timer error:', err)
+      } finally {
+        if (room.gameState?.phase === 'playing') {
+          this.setTurnTimer(room)
+        }
       }
     }, room.gameState.turnTimeLimit * 1000)
   }

@@ -54,7 +54,6 @@ export function CardComponent({
     <motion.button
       layoutId={layoutId}
       onClick={onClick}
-      onDoubleClick={onClick}
       disabled={!onClick}
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}

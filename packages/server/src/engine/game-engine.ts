@@ -489,13 +489,19 @@ export function handleTurnTimeout(
 ): { drawnCards: Card[] } {
   const player = state.players[state.currentPlayerIndex]
 
-  // If pending draws, force draw
+  // If pending draws, force draw then always advance
   if (state.pendingDrawCount > 0) {
     const result = drawCard(state, player.id, gamemode)
+    // drawCard may not advance the turn (e.g. drawn card is playable) —
+    // on a timeout we must always advance since the player is AFK
+    if (state.players[state.currentPlayerIndex]?.id === player.id) {
+      advanceTurn(state)
+      state.turnStartedAt = Date.now()
+    }
     return { drawnCards: result.drawnCards }
   }
 
-  // Auto-draw one card, then pass
+  // Auto-draw one card, then advance
   const result = drawCards(1, state.drawPile, state.discardPile)
   player.hand.push(...result.drawn)
   player.handCount = player.hand.length

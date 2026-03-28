@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { Card, CardColor } from '@uno/shared'
 import { CardComponent } from './CardComponent'
 import { ColorPicker } from './ColorPicker'
@@ -89,16 +89,11 @@ export function PlayerHand({
   }, [onPass])
 
   // Reset hasDrawn when turn changes
-  const currentPlayerIndex = useGameStore((s) => s.game?.currentPlayerIndex)
-  const myPlayerId = useGameStore((s) => s.myPlayerId)
-  const players = useGameStore((s) => s.game?.players)
-  const isStillMyTurn = players && currentPlayerIndex !== undefined
-    ? players[currentPlayerIndex]?.id === myPlayerId
-    : false
-
-  if (!isStillMyTurn && hasDrawn) {
-    setHasDrawn(false)
-  }
+  useEffect(() => {
+    if (!isMyTurn && hasDrawn) {
+      setHasDrawn(false)
+    }
+  }, [isMyTurn, hasDrawn])
 
   // Sort cards by color then value for display
   const sortedCards = [...cards].sort((a, b) => {
