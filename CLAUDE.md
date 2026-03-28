@@ -20,14 +20,17 @@ This is an npm workspaces monorepo with four packages:
 - `npm run dev:server` — Start only the Bun WebSocket server
 - `npm run build` — Build all packages
 - `npm run typecheck` — Type-check all packages
+- `cd packages/server && bun test` — Run server tests (game engine + WebSocket integration)
 
 ## Deployment
 
 ### Frontend (automatic)
 The frontend auto-deploys to Vercel on every push to `master`. No action needed.
 
-### Backend (manual — Ryan only)
-The backend runs on Ryan's homelab Kubernetes cluster. When server code changes:
+### Backend
+The backend runs on Ryan's homelab Kubernetes cluster. Kubernetes manifests in `kubernetes/` are managed by **Flux GitOps** — Flux watches the `master` branch every 1 minute and auto-applies manifest changes.
+
+**Container image** still needs to be built and pushed manually when server code changes:
 ```bash
 # From the repo root:
 podman build -t ghcr.io/emmick4/uno-server:latest .
@@ -39,8 +42,9 @@ Blake does NOT need to deploy the backend. If you change frontend-only code (any
 
 ### What triggers what on push to master:
 - **Changes in `packages/client/`** — Vercel auto-deploys frontend. Done.
-- **Changes in `packages/server/` or `packages/gamemodes/`** — Needs manual backend deploy by Ryan.
-- **Changes in `packages/shared/`** — Both frontend and backend are affected. Vercel auto-deploys frontend; Ryan needs to manually deploy backend.
+- **Changes in `packages/server/` or `packages/gamemodes/`** — Needs manual container build/push by Ryan.
+- **Changes in `packages/shared/`** — Both frontend and backend are affected. Vercel auto-deploys frontend; Ryan needs to build/push the container.
+- **Changes in `kubernetes/`** — Flux auto-applies within 1 minute. No action needed.
 
 ## Architecture Rules
 1. **Server is authoritative.** The client NEVER computes game logic. It sends intents and renders the state the server sends back.
