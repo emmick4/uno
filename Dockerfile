@@ -19,7 +19,7 @@ COPY packages/client/ packages/client/
 COPY tsconfig.base.json tsconfig.json ./
 
 # Build the frontend
-RUN cd packages/client && npx vite build
+RUN cd packages/client && bunx --bun vite build
 
 # Run as non-root
 USER bun
