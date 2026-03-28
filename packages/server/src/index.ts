@@ -1,6 +1,8 @@
 import { roomManager, type ConnectionData } from './room-manager'
+import { join } from 'path'
 
 const PORT = Number(process.env.PORT) || 1999
+const STATIC_DIR = join(import.meta.dir, '../../client/dist')
 
 const server = Bun.serve<ConnectionData>({
   port: PORT,
@@ -104,6 +106,19 @@ const server = Bun.serve<ConnectionData>({
       })
       if (upgraded) return undefined
       return new Response('WebSocket upgrade failed', { status: 400 })
+    }
+
+    // Serve static files from the Vite build
+    const filePath = join(STATIC_DIR, url.pathname === '/' ? 'index.html' : url.pathname)
+    const file = Bun.file(filePath)
+    if (await file.exists()) {
+      return new Response(file)
+    }
+
+    // SPA fallback — serve index.html for client-side routes
+    const indexFile = Bun.file(join(STATIC_DIR, 'index.html'))
+    if (await indexFile.exists()) {
+      return new Response(indexFile)
     }
 
     return new Response('UNO Game Server', { status: 200 })

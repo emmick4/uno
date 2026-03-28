@@ -2,11 +2,15 @@ import { useEffect, useRef, useCallback } from 'react'
 import type { ClientMessage, ServerMessage } from '@uno/shared'
 import { useGameStore } from '../stores/game-store'
 
-const WS_HOST = import.meta.env.VITE_WS_HOST || 'localhost:1999'
-
 function getWsUrl(roomCode: string): string {
-  const protocol = WS_HOST.includes('localhost') ? 'ws' : 'wss'
-  return `${protocol}://${WS_HOST}/ws/${roomCode}`
+  const wsHost = import.meta.env.VITE_WS_HOST
+  if (wsHost) {
+    const protocol = wsHost.includes('localhost') ? 'ws' : 'wss'
+    return `${protocol}://${wsHost}/ws/${roomCode}`
+  }
+  // Default: same origin (works when served from the Bun server)
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  return `${protocol}://${window.location.host}/ws/${roomCode}`
 }
 
 export function useGameSocket(roomCode: string | undefined) {
