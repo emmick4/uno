@@ -42,8 +42,6 @@ export function PublicGames() {
     navigate(`/lobby/${roomCode}`)
   }
 
-  if (games.length === 0 && !loading) return null
-
   return (
     <div className="w-full max-w-md">
       <div className="flex items-center justify-between mb-3">
@@ -59,6 +57,11 @@ export function PublicGames() {
         </button>
       </div>
       <div className="space-y-2">
+        {games.length === 0 && (
+          <p className="text-sm text-gray-500 text-center py-2">
+            {loading ? 'Looking for public games...' : 'No public games available'}
+          </p>
+        )}
         {games.map((game) => (
           <div
             key={game.roomCode}

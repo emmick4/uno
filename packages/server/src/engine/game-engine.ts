@@ -185,6 +185,11 @@ export function playCard(
   const effects = gamemode.resolveCardEffect(card, state, state.houseRules)
   applyEffects(state, effects)
 
+  // If another player had an open UNO catch window, close it now (current player acted)
+  if (state.unoCallWindow && state.unoCallWindow.playerId !== player.id) {
+    state.unoCallWindow = null
+  }
+
   // Check for UNO call window
   if (player.handCount === 1) {
     state.unoCallWindow = {
@@ -369,6 +374,9 @@ export function drawCard(
     return { success: true, drawnCards: allDrawn, canPlay: false }
   }
 
+  // Clear UNO catch window — current player is taking an action (drawing)
+  state.unoCallWindow = null
+
   // Single draw — check if drawn card is playable
   state.hasDrawnThisTurn = true
   let canPlayDrawn = false
@@ -420,10 +428,6 @@ export function callUno(
     }
     if (window.calledUno) {
       return { success: false, penalty: false, error: 'Player already called UNO' }
-    }
-    if (Date.now() > window.windowExpiresAt) {
-      state.unoCallWindow = null
-      return { success: false, penalty: false, error: 'UNO call window expired' }
     }
 
     // Penalty! Target player draws
