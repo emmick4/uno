@@ -97,7 +97,7 @@ class RoomManager {
 
     switch (msg.type) {
       case 'join':
-        this.handleJoin(ws, room, roomCode, msg.nickname)
+        this.handleJoin(ws, room, roomCode, msg.nickname, msg.playerId)
         break
       case 'updateSettings':
         this.handleUpdateSettings(ws, room, msg.settings)
@@ -179,8 +179,46 @@ class RoomManager {
     room: RoomState,
     roomCode: string,
     nickname: string,
+    existingPlayerId?: string,
   ) {
-    if (ws.data.playerId) return // already joined
+    // Reconnect: if the client sends a playerId, try to reclaim that seat
+    if (existingPlayerId) {
+      const existing = room.players.find((p) => p.id === existingPlayerId)
+      if (existing) {
+        // Reclaim the seat — close any stale connection for this player
+        for (const conn of room.connections) {
+          if (conn !== ws && conn.data.playerId === existingPlayerId) {
+            room.connections.delete(conn)
+            try { conn.close() } catch {}
+          }
+        }
+
+        existing.isConnected = true
+        existing.nickname = nickname.slice(0, 20) || existing.nickname
+        ws.data.playerId = existing.id
+        ws.data.nickname = existing.nickname
+        ws.data.isHost = existing.isHost
+
+        this.sendTo(ws, { type: 'welcome', playerId: existing.id })
+        this.broadcastLobbyState(roomCode, room)
+
+        // If in-game, also send game state
+        if (room.gameState) {
+          const gamePlayer = room.gameState.players.find((p) => p.id === existing.id)
+          if (gamePlayer) {
+            gamePlayer.isConnected = true
+            this.sendTo(ws, {
+              type: 'gameState',
+              state: serializeForPlayer(room.gameState, existing.id),
+            })
+          }
+        }
+        return
+      }
+      // If playerId not found in room, fall through to create new player
+    }
+
+    if (ws.data.playerId) return // already joined on this connection
 
     const playerId = crypto.randomUUID()
     const isHost = room.players.length === 0

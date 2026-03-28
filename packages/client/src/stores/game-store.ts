@@ -44,6 +44,14 @@ export const useGameStore = create<GameStore>((set) => ({
     switch (msg.type) {
       case 'welcome':
         set({ myPlayerId: msg.playerId })
+        // Store per-room so refreshes reconnect to the same seat
+        try {
+          const path = window.location.pathname
+          const roomMatch = path.match(/\/(lobby|game)\/([A-Z0-9]+)/i)
+          if (roomMatch) {
+            sessionStorage.setItem(`uno-player-${roomMatch[2]}`, msg.playerId)
+          }
+        } catch {}
         break
       case 'lobbyState':
         // If we get lobbyState after a game, it's a rematch — clear game state

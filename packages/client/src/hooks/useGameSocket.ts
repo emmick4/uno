@@ -26,12 +26,6 @@ export function useGameSocket(roomCode: string | undefined) {
 
       socket.addEventListener('open', () => {
         setConnected(true)
-        // If we have a stored player ID, attempt to rejoin
-        const myPlayerId = useGameStore.getState().myPlayerId
-        if (myPlayerId) {
-          const nickname = localStorage.getItem('uno-nickname') || 'Player'
-          socket.send(JSON.stringify({ type: 'join', nickname }))
-        }
       })
 
       socket.addEventListener('message', (event) => {

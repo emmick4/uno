@@ -41,7 +41,8 @@ export function LobbyScreen() {
   useEffect(() => {
     if (!connected) return
     const nickname = localStorage.getItem('uno-nickname') || 'Player'
-    send({ type: 'join', nickname })
+    const storedPlayerId = sessionStorage.getItem(`uno-player-${roomCode}`) || undefined
+    send({ type: 'join', nickname, playerId: storedPlayerId })
   }, [connected, send])
 
   // If host, send initial gamemode setting

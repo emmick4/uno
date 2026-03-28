@@ -36,11 +36,12 @@ export function GameScreen() {
   const connected = useGameStore((s) => s.connected)
   const [canPlayAfterDraw, setCanPlayAfterDraw] = useState(false)
 
-  // If no game state and not connected, try to rejoin
+  // If connected but no game state, try to rejoin
   useEffect(() => {
-    if (connected && !game && myPlayerId) {
+    if (connected && !game) {
       const nickname = localStorage.getItem('uno-nickname') || 'Player'
-      send({ type: 'join', nickname })
+      const storedPlayerId = sessionStorage.getItem(`uno-player-${roomCode}`) || undefined
+      send({ type: 'join', nickname, playerId: storedPlayerId })
     }
   }, [connected, game, myPlayerId, send])
 
