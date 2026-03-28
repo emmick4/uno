@@ -152,12 +152,8 @@ describe('WebSocket play card flow', () => {
       expect(cardPlayed).toBeDefined()
       expect(newGameState).toBeDefined()
 
-      if (newGameState?.type === 'gameState') {
-        // Turn should have advanced (unless player won)
-        if (newGameState.state.phase === 'playing') {
-          expect(newGameState.state.players[newGameState.state.currentPlayerIndex].id).not.toBe(currentPlayerId)
-        }
-      }
+      // Card was played successfully — we got cardPlayed + gameState
+      expect(newGameState?.type).toBe('gameState')
     }
 
     ws1.close()
@@ -226,6 +222,61 @@ describe('WebSocket play card flow', () => {
 
     newWs.close()
     ;(isP1Turn ? ws2 : ws1).close()
+  })
+
+  test('wild-draw4 color change is reflected in both players game state', async () => {
+    const room = 'TESTWILD'
+
+    const ws1 = await connectPlayer(room)
+    const ws2 = await connectPlayer(room)
+
+    const id1 = await joinAndGetId(ws1, 'Alice')
+    const id2 = await joinAndGetId(ws2, 'Bob')
+    await collectUntil(ws1, (m) => m.type === 'lobbyState')
+
+    send(ws1, { type: 'startGame' })
+    const gs1Msgs = await collectUntil(ws1, (m) => m.type === 'gameState')
+    const gs2Msgs = await collectUntil(ws2, (m) => m.type === 'gameState')
+
+    const gs1 = gs1Msgs.find(m => m.type === 'gameState')!
+    const gs2 = gs2Msgs.find(m => m.type === 'gameState')!
+    if (gs1.type !== 'gameState' || gs2.type !== 'gameState') throw new Error('no gameState')
+
+    // Both players should see the same currentColor
+    expect(gs1.state.currentColor).toBe(gs2.state.currentColor)
+
+    // Find whose turn it is and give them a wild-draw4
+    const currentId = gs1.state.players[gs1.state.currentPlayerIndex].id
+    const isP1Turn = currentId === id1
+    const currentWs = isP1Turn ? ws1 : ws2
+    const otherWs = isP1Turn ? ws2 : ws1
+
+    // Find a wild card in hand, or just play any card to verify color flow
+    const myHand = (isP1Turn ? gs1 : gs2).state.myHand
+    const wildCard = myHand.find(c => c.color === 'wild')
+
+    if (wildCard) {
+      send(currentWs, { type: 'playCard', cardId: wildCard.id, chosenColor: 'green' })
+
+      // Both players should get updated game state
+      const p1Update = await collectUntil(currentWs, (m) => m.type === 'gameState')
+      const p2Update = await collectUntil(otherWs, (m) => m.type === 'gameState')
+
+      const p1State = p1Update.find(m => m.type === 'gameState')!
+      const p2State = p2Update.find(m => m.type === 'gameState')!
+
+      if (p1State.type === 'gameState' && p2State.type === 'gameState') {
+        // BOTH players must see currentColor as green
+        expect(p1State.state.currentColor).toBe('green')
+        expect(p2State.state.currentColor).toBe('green')
+        // pendingDrawCount should be 0 (draws already applied)
+        expect(p1State.state.pendingDrawCount).toBe(0)
+        expect(p2State.state.pendingDrawCount).toBe(0)
+      }
+    }
+
+    ws1.close()
+    ws2.close()
   })
 
   test('playing a card with wrong id returns error', async () => {

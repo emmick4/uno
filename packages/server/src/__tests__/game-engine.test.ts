@@ -165,6 +165,58 @@ describe('handleTurnTimeout', () => {
   })
 })
 
+describe('wild-draw4 color change', () => {
+  test('sets currentColor to chosen color after wild-draw4', () => {
+    const state = makeGame()
+    setTopDiscard(state, 'red', '5')
+    // Give extra cards so player doesn't win
+    giveCard(state, { color: 'red', value: '1' })
+    giveCard(state, { color: 'red', value: '2' })
+    const card = giveCard(state, { color: 'wild', value: 'wild-draw4' })
+    const currentId = state.players[state.currentPlayerIndex].id
+
+    const result = playCard(state, currentId, card.id, 'green', gamemode)
+
+    expect(result.success).toBe(true)
+    expect(state.currentColor).toBe('green')
+  })
+
+  test('pendingDrawCount is 0 after wild-draw4 without stacking', () => {
+    const state = makeGame()
+    setTopDiscard(state, 'red', '5')
+    giveCard(state, { color: 'red', value: '1' })
+    giveCard(state, { color: 'red', value: '2' })
+    const card = giveCard(state, { color: 'wild', value: 'wild-draw4' })
+    const currentId = state.players[state.currentPlayerIndex].id
+
+    playCard(state, currentId, card.id, 'green', gamemode)
+
+    expect(state.pendingDrawCount).toBe(0)
+    expect(state.pendingSkipCount).toBe(0) // consumed by advanceTurn
+  })
+
+  test('serialized state shows correct currentColor for other player', () => {
+    const state = makeGame()
+    setTopDiscard(state, 'red', '5')
+    giveCard(state, { color: 'red', value: '1' })
+    giveCard(state, { color: 'red', value: '2' })
+    const card = giveCard(state, { color: 'wild', value: 'wild-draw4' })
+    const p1Id = state.players[state.currentPlayerIndex].id
+    const p2Id = state.players.find(p => p.id !== p1Id)!.id
+
+    playCard(state, p1Id, card.id, 'blue', gamemode)
+
+    const p2View = serializeForPlayer(state, p2Id)
+    expect(p2View.currentColor).toBe('blue')
+    expect(p2View.pendingDrawCount).toBe(0)
+
+    // Green cards should be playable by checking canPlay
+    const greenCard = { id: 'test', color: 'blue' as const, value: '3', gamemode: 'original' }
+    const canPlayIt = gamemode.canPlay(greenCard, p2View.topDiscard, p2View.currentColor, state)
+    expect(canPlayIt).toBe(true)
+  })
+})
+
 describe('serializeForPlayer', () => {
   test('includes myHand for the requesting player', () => {
     const state = makeGame()

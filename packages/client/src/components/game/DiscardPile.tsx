@@ -7,12 +7,12 @@ interface DiscardPileProps {
   currentColor: CardColor
 }
 
-const COLOR_RING: Record<string, string> = {
-  red: 'ring-red-500',
-  blue: 'ring-blue-500',
-  green: 'ring-green-500',
-  yellow: 'ring-yellow-500',
-  wild: 'ring-purple-500',
+const COLOR_HEX: Record<string, string> = {
+  red: '#ef4444',
+  blue: '#3b82f6',
+  green: '#22c55e',
+  yellow: '#eab308',
+  wild: '#a855f7',
 }
 
 export function DiscardPile({ topCard, currentColor }: DiscardPileProps) {
@@ -24,7 +24,8 @@ export function DiscardPile({ topCard, currentColor }: DiscardPileProps) {
           initial={{ scale: 0.5, rotate: -15, opacity: 0 }}
           animate={{ scale: 1, rotate: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          className={`ring-4 ${COLOR_RING[currentColor] || 'ring-gray-500'} rounded-xl transition-shadow`}
+          className="rounded-xl"
+          style={{ boxShadow: `0 0 0 4px ${COLOR_HEX[currentColor] || '#6b7280'}` }}
         >
           <CardComponent card={topCard} size="lg" />
         </motion.div>
