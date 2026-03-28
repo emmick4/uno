@@ -36,14 +36,13 @@ export function GameScreen() {
   const connected = useGameStore((s) => s.connected)
   const [canPlayAfterDraw, setCanPlayAfterDraw] = useState(false)
 
-  // If connected but no game state, try to rejoin
+  // Identify ourselves on every new WebSocket connection
   useEffect(() => {
-    if (connected && !game) {
-      const nickname = localStorage.getItem('uno-nickname') || 'Player'
-      const storedPlayerId = sessionStorage.getItem(`uno-player-${roomCode}`) || undefined
-      send({ type: 'join', nickname, playerId: storedPlayerId })
-    }
-  }, [connected, game, myPlayerId, send])
+    if (!connected) return
+    const nickname = localStorage.getItem('uno-nickname') || 'Player'
+    const storedPlayerId = sessionStorage.getItem(`uno-player-${roomCode}`) || undefined
+    send({ type: 'join', nickname, playerId: storedPlayerId })
+  }, [connected, roomCode, send])
 
   const isMyTurn = game
     ? game.players[game.currentPlayerIndex]?.id === myPlayerId

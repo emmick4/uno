@@ -164,6 +164,70 @@ describe('WebSocket play card flow', () => {
     ws2.close()
   })
 
+  test('new connection can rejoin mid-game and play cards', async () => {
+    const room = 'TESTRECON'
+
+    const ws1 = await connectPlayer(room)
+    const ws2 = await connectPlayer(room)
+
+    const id1 = await joinAndGetId(ws1, 'Alice')
+    const id2 = await joinAndGetId(ws2, 'Bob')
+    await collectUntil(ws1, (m) => m.type === 'lobbyState')
+
+    // Start game
+    send(ws1, { type: 'startGame' })
+    const gs1 = await collectUntil(ws1, (m) => m.type === 'gameState')
+    await collectUntil(ws2, (m) => m.type === 'gameState')
+
+    const gameState = gs1.find(m => m.type === 'gameState')!
+    if (gameState.type !== 'gameState') throw new Error('no gameState')
+    const currentPlayerId = gameState.state.players[gameState.state.currentPlayerIndex].id
+    const isP1Turn = currentPlayerId === id1
+
+    // Simulate what the client does: close socket, open a NEW one (like navigating to GameScreen)
+    const oldWs = isP1Turn ? ws1 : ws2
+    const playerId = isP1Turn ? id1 : id2
+    oldWs.close()
+
+    // Wait a beat for close to process
+    await new Promise(r => setTimeout(r, 100))
+
+    // New connection — ws.data.playerId is '' on server
+    const newWs = await connectPlayer(room)
+
+    // THIS is the bug scenario: if we don't rejoin, playCard fails with "Player not found"
+    // because ws.data.playerId is still ''
+
+    // Send join with stored playerId (like the client does)
+    send(newWs, { type: 'join', nickname: 'Alice', playerId })
+    const rejoinMsgs = await collectUntil(newWs, (m) => m.type === 'gameState')
+    const welcome = rejoinMsgs.find(m => m.type === 'welcome')
+    expect(welcome).toBeDefined()
+
+    // Now find a playable card and try to play it
+    const gs = rejoinMsgs.find(m => m.type === 'gameState')!
+    if (gs.type !== 'gameState') throw new Error('no gameState')
+
+    const playable = gs.state.myHand.find((card) => {
+      if (card.color === 'wild') return true
+      if (card.color === gs.state.currentColor) return true
+      if (card.value === gs.state.topDiscard.value) return true
+      return false
+    })
+
+    if (playable) {
+      const chosenColor = playable.color === 'wild' ? 'red' as const : undefined
+      send(newWs, { type: 'playCard', cardId: playable.id, chosenColor })
+      const result = await collectUntil(newWs, (m) => m.type === 'gameState' || m.type === 'error')
+      const err = result.find(m => m.type === 'error')
+      // Should NOT get "Player not found"
+      expect(err).toBeUndefined()
+    }
+
+    newWs.close()
+    ;(isP1Turn ? ws2 : ws1).close()
+  })
+
   test('playing a card with wrong id returns error', async () => {
     const room = 'TESTERR'
 
