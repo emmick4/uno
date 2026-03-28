@@ -30,6 +30,9 @@ export interface GameState {
     windowExpiresAt: number
   } | null
 
+  /** True if the current player has already drawn this turn */
+  hasDrawnThisTurn: boolean
+
   houseRules: HouseRules
   standings: string[]
   rematchVotes: string[]
@@ -70,6 +73,7 @@ export interface ClientGameState {
   pendingSkipCount: number
 
   unoCallWindow: { playerId: string; calledUno: boolean } | null
+  hasDrawnThisTurn: boolean
   houseRules: HouseRules
   standings: string[]
   rematchVotes: string[]

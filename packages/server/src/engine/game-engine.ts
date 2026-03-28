@@ -82,6 +82,7 @@ export function createGameState(
     pendingDrawCount: 0,
     pendingSkipCount: 0,
     unoCallWindow: null,
+    hasDrawnThisTurn: false,
     houseRules,
     standings: [],
     rematchVotes: [],
@@ -290,6 +291,11 @@ export function drawCard(
 
   const player = state.players[playerIndex]
 
+  // Only one draw per turn (unless there are pending draws from card effects)
+  if (state.hasDrawnThisTurn && state.pendingDrawCount === 0) {
+    return { success: false, error: 'Already drawn this turn', drawnCards: [], canPlay: false }
+  }
+
   // mustPlayIfAble: prevent drawing if the player has a playable card
   if (state.houseRules.mustPlayIfAble && state.pendingDrawCount === 0) {
     const topDiscard = state.discardPile[state.discardPile.length - 1]
@@ -351,23 +357,30 @@ export function drawCard(
   player.handCount = player.hand.length
   state.drawPileCount = state.drawPile.length
 
-  // Check if drawn card is playable (only for single draw)
-  let canPlayDrawn = false
-  if (drawCount === 1 && allDrawn.length === 1) {
-    const topDiscard = state.discardPile[state.discardPile.length - 1]
-    canPlayDrawn = gamemode.canPlay(allDrawn[0], topDiscard, state.currentColor, state)
+  // Clear UNO window for this player if they drew
+  if (state.unoCallWindow?.playerId === player.id) {
+    state.unoCallWindow = null
   }
 
-  // If draws skip turn, or this was a penalty draw, advance
+  // Penalty draws (draw 2/4 from stacking) or drawsSkipTurn — always end turn
   if (state.houseRules.drawsSkipTurn || drawCount > 1) {
     advanceTurn(state)
     state.turnStartedAt = Date.now()
     return { success: true, drawnCards: allDrawn, canPlay: false }
   }
 
-  // Clear UNO window for this player if they drew
-  if (state.unoCallWindow?.playerId === player.id) {
-    state.unoCallWindow = null
+  // Single draw — check if drawn card is playable
+  state.hasDrawnThisTurn = true
+  let canPlayDrawn = false
+  if (allDrawn.length === 1) {
+    const topDiscard = state.discardPile[state.discardPile.length - 1]
+    canPlayDrawn = gamemode.canPlay(allDrawn[0], topDiscard, state.currentColor, state)
+  }
+
+  // If drawn card isn't playable, auto-advance turn
+  if (!canPlayDrawn) {
+    advanceTurn(state)
+    state.turnStartedAt = Date.now()
   }
 
   return { success: true, drawnCards: allDrawn, canPlay: canPlayDrawn }
@@ -658,11 +671,10 @@ function advanceTurn(state: GameState): void {
     break
   } while (true)
 
-  // Reset turnSkipped for next player
+  // Reset state for next player's turn
   state.players[state.currentPlayerIndex].turnSkipped = false
-
-  // Reset UNO call state for current player
   state.players[state.currentPlayerIndex].hasCalledUno = false
+  state.hasDrawnThisTurn = false
 }
 
 function getActivePlayers(state: GameState): PlayerState[] {
@@ -735,6 +747,7 @@ export function serializeForPlayer(state: GameState, playerId: string): ClientGa
     unoCallWindow: state.unoCallWindow
       ? { playerId: state.unoCallWindow.playerId, calledUno: state.unoCallWindow.calledUno }
       : null,
+    hasDrawnThisTurn: state.hasDrawnThisTurn,
     houseRules: state.houseRules,
     standings: state.standings,
     rematchVotes: state.rematchVotes,

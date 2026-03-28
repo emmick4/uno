@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useGameSocket } from '../hooks/useGameSocket'
 import { useGameStore } from '../stores/game-store'
@@ -34,8 +34,6 @@ export function GameScreen() {
   const game = useGameStore((s) => s.game)
   const myPlayerId = useGameStore((s) => s.myPlayerId)
   const connected = useGameStore((s) => s.connected)
-  const [canPlayAfterDraw, setCanPlayAfterDraw] = useState(false)
-
   // Identify ourselves on every new WebSocket connection
   useEffect(() => {
     if (!connected) return
@@ -59,20 +57,16 @@ export function GameScreen() {
   const handlePlayCard = useCallback(
     (cardId: string, chosenColor?: CardColor) => {
       send({ type: 'playCard', cardId, chosenColor })
-      setCanPlayAfterDraw(false)
     },
     [send],
   )
 
   const handleDrawCard = useCallback(() => {
     send({ type: 'drawCard' })
-    // The server will tell us via gameState if we can play the drawn card
-    setCanPlayAfterDraw(true)
   }, [send])
 
   const handlePass = useCallback(() => {
     send({ type: 'pass' })
-    setCanPlayAfterDraw(false)
   }, [send])
 
   const handleCallUno = useCallback(
@@ -206,10 +200,10 @@ export function GameScreen() {
             topDiscard={game.topDiscard}
             currentColor={game.currentColor}
             pendingDrawCount={game.pendingDrawCount}
+            hasDrawnThisTurn={game.hasDrawnThisTurn}
             onPlayCard={handlePlayCard}
             onDrawCard={handleDrawCard}
             onPass={handlePass}
-            canPlayAfterDraw={canPlayAfterDraw}
           />
         </div>
 

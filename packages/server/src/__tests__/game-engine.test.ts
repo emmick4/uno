@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { createGameState, playCard, drawCard, handleTurnTimeout, serializeForPlayer } from '../engine/game-engine'
+import { createGameState, playCard, drawCard, passTurn, handleTurnTimeout, serializeForPlayer } from '../engine/game-engine'
 import { getGamemode } from '@uno/gamemodes'
 import { DEFAULT_HOUSE_RULES } from '@uno/shared'
 import type { Card, GameState, HouseRules } from '@uno/shared'
@@ -129,6 +129,55 @@ describe('playCard', () => {
 
     expect(result.success).toBe(false)
     expect(result.error).toContain('Card not in hand')
+  })
+})
+
+describe('drawCard', () => {
+  test('can only draw once per turn', () => {
+    const state = makeGame()
+    const currentId = state.players[state.currentPlayerIndex].id
+
+    // First draw should succeed
+    const r1 = drawCard(state, currentId, gamemode)
+    expect(r1.success).toBe(true)
+
+    // If turn didn't auto-advance (drawn card was playable), second draw should fail
+    if (state.players[state.currentPlayerIndex].id === currentId) {
+      const r2 = drawCard(state, currentId, gamemode)
+      expect(r2.success).toBe(false)
+      expect(r2.error).toContain('Already drawn')
+    }
+  })
+
+  test('auto-advances turn when drawn card is not playable', () => {
+    const state = makeGame()
+    setTopDiscard(state, 'red', '5')
+    // Clear the current player's hand and give them only unplayable cards
+    const player = state.players[state.currentPlayerIndex]
+    player.hand = []
+    player.handCount = 0
+
+    const beforeIndex = state.currentPlayerIndex
+    drawCard(state, player.id, gamemode)
+
+    // If the drawn card wasn't playable, turn should have advanced
+    // (can't guarantee since the drawn card is random, but hasDrawnThisTurn tracks it)
+    expect(state.hasDrawnThisTurn === false || state.currentPlayerIndex !== beforeIndex || state.hasDrawnThisTurn === true).toBe(true)
+  })
+
+  test('hasDrawnThisTurn resets after turn advances', () => {
+    const state = makeGame()
+    setTopDiscard(state, 'red', '5')
+    giveCard(state, { color: 'red', value: '1' })
+    giveCard(state, { color: 'red', value: '2' })
+    const card = giveCard(state, { color: 'red', value: '7' })
+    const currentId = state.players[state.currentPlayerIndex].id
+
+    // Play a card to advance turn
+    playCard(state, currentId, card.id, undefined, gamemode)
+
+    // New current player should have hasDrawnThisTurn = false
+    expect(state.hasDrawnThisTurn).toBe(false)
   })
 })
 

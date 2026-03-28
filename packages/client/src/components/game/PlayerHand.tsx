@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import type { Card, CardColor } from '@uno/shared'
 import { CardComponent } from './CardComponent'
 import { ColorPicker } from './ColorPicker'
@@ -10,10 +10,10 @@ interface PlayerHandProps {
   topDiscard: Card
   currentColor: CardColor
   pendingDrawCount: number
+  hasDrawnThisTurn: boolean
   onPlayCard: (cardId: string, chosenColor?: CardColor) => void
   onDrawCard: () => void
   onPass: () => void
-  canPlayAfterDraw: boolean
 }
 
 function canPlayCard(
@@ -44,13 +44,12 @@ export function PlayerHand({
   topDiscard,
   currentColor,
   pendingDrawCount,
+  hasDrawnThisTurn,
   onPlayCard,
   onDrawCard,
   onPass,
-  canPlayAfterDraw,
 }: PlayerHandProps) {
   const [colorPickerCard, setColorPickerCard] = useState<string | null>(null)
-  const [hasDrawn, setHasDrawn] = useState(false)
   const houseRules = useGameStore((s) => s.game?.houseRules)
 
   const handleCardClick = useCallback(
@@ -79,21 +78,12 @@ export function PlayerHand({
   )
 
   const handleDraw = useCallback(() => {
-    setHasDrawn(true)
     onDrawCard()
   }, [onDrawCard])
 
   const handlePass = useCallback(() => {
-    setHasDrawn(false)
     onPass()
   }, [onPass])
-
-  // Reset hasDrawn when turn changes
-  useEffect(() => {
-    if (!isMyTurn && hasDrawn) {
-      setHasDrawn(false)
-    }
-  }, [isMyTurn, hasDrawn])
 
   // Sort cards by color then value for display
   const sortedCards = [...cards].sort((a, b) => {
@@ -108,7 +98,7 @@ export function PlayerHand({
       {/* Action buttons */}
       {isMyTurn && (
         <div className="flex gap-2">
-          {!hasDrawn && (
+          {!hasDrawnThisTurn && (
             <button
               onClick={handleDraw}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-colors"
@@ -116,7 +106,7 @@ export function PlayerHand({
               {pendingDrawCount > 0 ? `Draw ${pendingDrawCount}` : 'Draw Card'}
             </button>
           )}
-          {hasDrawn && !canPlayAfterDraw && (
+          {hasDrawnThisTurn && (
             <button
               onClick={handlePass}
               className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm font-medium transition-colors"
