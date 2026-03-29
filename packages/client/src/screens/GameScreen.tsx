@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useGameSocket } from '../hooks/useGameSocket'
 import { useGameStore } from '../stores/game-store'
@@ -32,8 +32,23 @@ export function GameScreen() {
   const navigate = useNavigate()
   const { send } = useGameSocket(roomCode)
   const game = useGameStore((s) => s.game)
+  const lobby = useGameStore((s) => s.lobby)
   const myPlayerId = useGameStore((s) => s.myPlayerId)
   const connected = useGameStore((s) => s.connected)
+  const hasReceivedGame = useRef(false)
+
+  // Track when we first receive game state
+  useEffect(() => {
+    if (game) hasReceivedGame.current = true
+  }, [game])
+
+  // Navigate back to lobby on rematch (game cleared after server returns lobbyState)
+  useEffect(() => {
+    if (hasReceivedGame.current && !game && lobby && connected && roomCode) {
+      navigate(`/lobby/${roomCode}`)
+    }
+  }, [game, lobby, connected, roomCode, navigate])
+
   // Identify ourselves on every new WebSocket connection
   useEffect(() => {
     if (!connected) return
