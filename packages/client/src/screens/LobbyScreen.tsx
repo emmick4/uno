@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router'
 import { useGameSocket } from '../hooks/useGameSocket'
 import { useGameStore } from '../stores/game-store'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 import { PlayerSeat } from '../components/lobby/PlayerSeat'
 import { SettingsPanel } from '../components/lobby/SettingsPanel'
 import { MAX_PLAYERS } from '@uno/shared'
@@ -45,12 +46,17 @@ export function LobbyScreen() {
     send({ type: 'join', nickname, playerId: storedPlayerId })
   }, [connected, send])
 
-  // If host, send initial gamemode setting
+  // If host, send initial gamemode + any saved house rules
   useEffect(() => {
     if (!connected || !isHost) return
     const gamemode = localStorage.getItem('uno-gamemode') || 'original'
-    send({ type: 'updateSettings', settings: { gamemode } })
-  }, [connected, isHost, send])
+    const savedRaw = rememberHouseRules ? localStorage.getItem(`uno-house-rules-${gamemode}`) : null
+    const savedHouseRules = savedRaw ? JSON.parse(savedRaw) : null
+    send({
+      type: 'updateSettings',
+      settings: savedHouseRules ? { gamemode, houseRules: savedHouseRules } : { gamemode },
+    })
+  }, [connected, isHost, send, rememberHouseRules])
 
   const players = lobby?.players || []
   const settings = lobby?.settings
@@ -61,6 +67,7 @@ export function LobbyScreen() {
     send({ type: 'startGame' })
   }
 
+  const [rememberHouseRules, setRememberHouseRules] = useLocalStorage('uno-remember-house-rules', false)
   const [codeCopied, setCodeCopied] = useState(false)
 
   const handleCopyLink = () => {
@@ -134,7 +141,15 @@ export function LobbyScreen() {
         <SettingsPanel
           settings={settings || null}
           isHost={amHost}
-          onUpdateSettings={(s) => send({ type: 'updateSettings', settings: s })}
+          onUpdateSettings={(s) => {
+            if (rememberHouseRules && s.houseRules) {
+              const gamemode = settings?.gamemode || localStorage.getItem('uno-gamemode') || 'original'
+              localStorage.setItem(`uno-house-rules-${gamemode}`, JSON.stringify(s.houseRules))
+            }
+            send({ type: 'updateSettings', settings: s })
+          }}
+          rememberHouseRules={rememberHouseRules}
+          onToggleRememberHouseRules={() => setRememberHouseRules((v) => !v)}
         />
       </div>
 

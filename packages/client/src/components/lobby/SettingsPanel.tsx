@@ -5,9 +5,11 @@ interface SettingsPanelProps {
   settings: GameSettings | null
   isHost: boolean
   onUpdateSettings: (settings: Partial<GameSettings>) => void
+  rememberHouseRules: boolean
+  onToggleRememberHouseRules: () => void
 }
 
-export function SettingsPanel({ settings, isHost, onUpdateSettings }: SettingsPanelProps) {
+export function SettingsPanel({ settings, isHost, onUpdateSettings, rememberHouseRules, onToggleRememberHouseRules }: SettingsPanelProps) {
   if (!settings) return null
 
   const handleHouseRuleToggle = (ruleId: string) => {
@@ -99,9 +101,20 @@ export function SettingsPanel({ settings, isHost, onUpdateSettings }: SettingsPa
       </div>
 
       {/* House Rules */}
-      <h4 className="font-semibold mb-3 text-sm text-gray-400 uppercase tracking-wider">
-        House Rules
-      </h4>
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="font-semibold text-sm text-gray-400 uppercase tracking-wider">
+          House Rules
+        </h4>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={rememberHouseRules}
+            onChange={onToggleRememberHouseRules}
+            className="accent-blue-500 w-3.5 h-3.5"
+          />
+          <span className="text-xs text-gray-400">Remember</span>
+        </label>
+      </div>
       <div className="space-y-3">
         {UNIVERSAL_HOUSE_RULES.map((rule) => (
           <div key={rule.id}>
