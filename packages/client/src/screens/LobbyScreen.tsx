@@ -46,6 +46,8 @@ export function LobbyScreen() {
     send({ type: 'join', nickname, playerId: storedPlayerId })
   }, [connected, send])
 
+  const [rememberHouseRules, setRememberHouseRules] = useLocalStorage('uno-remember-house-rules', false)
+
   // If host, send initial gamemode + any saved house rules
   useEffect(() => {
     if (!connected || !isHost) return
@@ -67,7 +69,6 @@ export function LobbyScreen() {
     send({ type: 'startGame' })
   }
 
-  const [rememberHouseRules, setRememberHouseRules] = useLocalStorage('uno-remember-house-rules', false)
   const [codeCopied, setCodeCopied] = useState(false)
 
   const handleCopyLink = () => {

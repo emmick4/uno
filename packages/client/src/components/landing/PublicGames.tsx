@@ -9,7 +9,14 @@ interface PublicGame {
   maxPlayers: number
 }
 
-const WS_HOST = import.meta.env.VITE_WS_HOST || 'localhost:1999'
+function getApiBase(): string {
+  const wsHost = import.meta.env.VITE_WS_HOST
+  if (wsHost) {
+    const protocol = wsHost.includes('localhost') ? 'http' : 'https'
+    return `${protocol}://${wsHost}`
+  }
+  return ''  // same origin
+}
 
 export function PublicGames() {
   const [games, setGames] = useState<PublicGame[]>([])
@@ -19,8 +26,7 @@ export function PublicGames() {
   const fetchGames = async () => {
     setLoading(true)
     try {
-      const protocol = WS_HOST.includes('localhost') ? 'http' : 'https'
-      const res = await fetch(`${protocol}://${WS_HOST}/api/public-games`)
+      const res = await fetch(`${getApiBase()}/api/public-games`)
       const data = await res.json()
       setGames(data.games || [])
     } catch {
