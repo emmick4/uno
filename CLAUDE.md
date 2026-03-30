@@ -3,8 +3,7 @@
 ## Project Overview
 Real-time multiplayer Uno card game with support for multiple gamemodes (Original Uno, Harry Potter Uno, more later). Built with React + Vite (frontend) and a Bun WebSocket server (backend). No database — all game state is ephemeral.
 
-**Live at:** https://uno-one-olive.vercel.app
-**WebSocket server:** https://uno-ws.ryanemmick.com
+**Live at:** https://uno.ryanemmick.com
 
 ## Monorepo Structure
 This is an npm workspaces monorepo with four packages:
@@ -24,27 +23,17 @@ This is an npm workspaces monorepo with four packages:
 
 ## Deployment
 
-### Frontend (automatic)
-The frontend auto-deploys to Vercel on every push to `master`. No action needed.
+**Everything is automatic.** Push to `master` and the full stack deploys:
 
-### Backend
-The backend runs on Ryan's homelab Kubernetes cluster. Kubernetes manifests in `kubernetes/` are managed by **Flux GitOps** — Flux watches the `master` branch every 1 minute and auto-applies manifest changes.
+1. **GitHub Actions** builds the container image (frontend + backend), pushes to GHCR, and hits the deploy webhook to trigger a rolling restart (~40 seconds total).
+2. **Flux GitOps** watches the `master` branch every 1 minute and auto-applies any Kubernetes manifest changes in `kubernetes/`.
 
-**Container image** still needs to be built and pushed manually when server code changes:
-```bash
-# From the repo root:
-podman build -t ghcr.io/emmick4/uno-server:latest .
-podman push ghcr.io/emmick4/uno-server:latest
-kubectl rollout restart deployment/uno-server -n uno
-```
+The Bun server serves both the API/WebSocket backend AND the built Vite frontend from a single container. There is no separate frontend deployment.
 
-Blake does NOT need to deploy the backend. If you change frontend-only code (anything in `packages/client/`), just push to `master` and Vercel handles it. If you change server code, tell Ryan and he'll deploy it.
-
-### What triggers what on push to master:
-- **Changes in `packages/client/`** — Vercel auto-deploys frontend. Done.
-- **Changes in `packages/server/` or `packages/gamemodes/`** — Needs manual container build/push by Ryan.
-- **Changes in `packages/shared/`** — Both frontend and backend are affected. Vercel auto-deploys frontend; Ryan needs to build/push the container.
-- **Changes in `kubernetes/`** — Flux auto-applies within 1 minute. No action needed.
+### Before pushing:
+- Run `npm run typecheck` to catch type errors across all packages
+- Run `cd packages/server && bun test` to run game engine tests
+- If you changed shared types, make sure both client and server still compile
 
 ## Architecture Rules
 1. **Server is authoritative.** The client NEVER computes game logic. It sends intents and renders the state the server sends back.
@@ -69,11 +58,13 @@ If you're working on UI components, you only need to touch files in `packages/cl
 - Tailwind classes
 - Animation timings and effects
 
-### What you should NOT change without coordination:
-- Type definitions in `packages/shared/`
-- The Zustand store structure
+### Be careful changing (may affect server/client contract):
+- Type definitions in `packages/shared/` — both client and server depend on these
+- The Zustand store structure in `game-store.ts`
 - WebSocket message handling in `useGameSocket.ts`
-- Anything in `packages/server/` or `packages/gamemodes/`
+- Game engine logic in `packages/server/src/engine/game-engine.ts`
+
+If you change shared types, run `npm run typecheck` to make sure nothing breaks across packages.
 
 ## WebSocket Message Protocol
 Messages between client and server are JSON with a `type` field. All types are defined in `packages/shared/src/types/messages.ts`.
