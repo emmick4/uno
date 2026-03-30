@@ -1,4 +1,5 @@
 FROM docker.io/oven/bun:1 AS base
+LABEL org.opencontainers.image.source=https://github.com/emmick4/uno
 WORKDIR /app
 
 # Copy all package files for workspace resolution
