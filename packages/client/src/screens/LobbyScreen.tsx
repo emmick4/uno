@@ -97,7 +97,8 @@ export function LobbyScreen() {
         <div className="text-sm text-gray-500 uppercase tracking-wider mb-1">Room Code</div>
         <div
           onClick={handleCopyLink}
-          className="text-5xl font-mono tracking-[0.5em] bg-gray-800 px-8 py-4 rounded-xl cursor-pointer hover:bg-gray-700 transition-colors"
+          className="text-5xl tracking-[0.5em] bg-gray-800 px-8 py-4 rounded-xl cursor-pointer hover:bg-gray-700 transition-colors"
+          style={{ fontFamily: 'UnoHandwritten, sans-serif' }}
         >
           {roomCode}
         </div>
