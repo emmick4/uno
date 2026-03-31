@@ -53,16 +53,14 @@ export function LandingScreen() {
           <button
             key={gm.id}
             onClick={() => gm.available && setSelectedGamemode(gm.id)}
-            className={`w-48 h-72 rounded-xl border-2 overflow-hidden cursor-pointer transition-all ${
-              selectedGamemode === gm.id
-                ? 'border-white scale-105 shadow-lg shadow-white/10'
-                : 'border-gray-600 hover:border-gray-400'
+            className={`w-48 h-72 cursor-pointer transition-all duration-200 hover:scale-105 ${
+              selectedGamemode === gm.id ? 'scale-105' : ''
             } ${!gm.available ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <img
               src={gm.card}
               alt={gm.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full"
             />
             {!gm.available && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-xs text-gray-400">
