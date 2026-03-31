@@ -85,8 +85,9 @@ class RoomManager {
     for (const [roomCode, room] of this.rooms) {
       let reason: string | null = null
 
-      if (room.emptyAt && now - room.emptyAt > EMPTY_ROOM_TIMEOUT_MS) {
-        reason = 'empty room'
+      if (room.connections.size === 0) {
+        if (!room.emptyAt) room.emptyAt = now // backfill if handleClose didn't set it
+        if (now - room.emptyAt > EMPTY_ROOM_TIMEOUT_MS) reason = 'empty room'
       } else if (now - room.lastActivityAt > IDLE_TIMEOUT_MS) {
         reason = 'idle timeout'
       } else if (room.phase === 'lobby' && now - room.createdAt > LOBBY_TIMEOUT_MS) {
