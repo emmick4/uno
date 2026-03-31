@@ -105,10 +105,12 @@ class RoomManager {
   private closeRoom(roomCode: string, room: RoomState) {
     if (room.turnTimer) clearTimeout(room.turnTimer)
     this.broadcast(room, { type: 'error', code: 'ROOM_CLOSED', message: 'Room closed due to inactivity' })
+    const connCount = room.connections.size
     for (const conn of room.connections) {
       try { conn.close(4000, 'Room closed') } catch {}
     }
-    this.rooms.delete(roomCode)
+    const deleted = this.rooms.delete(roomCode)
+    console.log(`closeRoom ${roomCode}: connections=${connCount}, deleted=${deleted}, remaining=${this.rooms.size}`)
   }
 
   getOrCreateRoom(roomCode: string): RoomState {
