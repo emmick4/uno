@@ -70,6 +70,7 @@ export function PlayerSeat({ player, isMe, isHost, onUpdateNickname }: PlayerSea
       ) : (
         <div
           className={`text-xs text-center max-w-[80px] truncate ${isMe ? 'cursor-pointer hover:underline' : ''}`}
+          style={{ fontFamily: 'UnoHandwritten, sans-serif' }}
           onClick={startEditing}
         >
           {player.nickname}

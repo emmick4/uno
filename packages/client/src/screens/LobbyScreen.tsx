@@ -8,14 +8,16 @@ import { SettingsPanel } from '../components/lobby/SettingsPanel'
 import { MAX_PLAYERS } from '@uno/shared'
 
 /** Seat positions around an oval (in %, relative to container) */
-function getSeatPositions(count: number): Array<{ x: number; y: number }> {
-  const positions: Array<{ x: number; y: number }> = []
+function getSeatPositions(count: number): Array<{ x: number; y: number; angle: number }> {
+  const positions: Array<{ x: number; y: number; angle: number }> = []
   for (let i = 0; i < count; i++) {
     // Start from bottom center, go clockwise
     const angle = (Math.PI / 2) + (2 * Math.PI * i) / count
     const x = 50 + 45 * Math.cos(angle)
     const y = 50 + 42 * Math.sin(angle)
-    positions.push({ x, y })
+    // Rotation so the chair faces inward (toward center) — angle in degrees, +90 so seat faces table
+    const rotation = (angle * 180 / Math.PI) + 90
+    positions.push({ x, y, angle: rotation })
   }
   return positions
 }
@@ -108,25 +110,37 @@ export function LobbyScreen() {
       </div>
 
       <div className="flex gap-8 items-start">
-        {/* Oval table with seats */}
+        {/* Card table with seats */}
         <div className="relative w-[700px] h-[420px]">
-          <div className="absolute inset-[40px] bg-green-900/30 rounded-[50%] border-2 border-green-700/50" />
+          <img
+            src="/assets/card-table.svg"
+            alt=""
+            className="absolute inset-[20px] w-[calc(100%-40px)] h-[calc(100%-40px)] object-contain z-10 pointer-events-none"
+          />
 
           {seatPositions.map((pos, i) => {
             const player = players.find((p) => p.seatIndex === i)
             return (
               <div
                 key={i}
-                className="absolute -translate-x-1/2 -translate-y-1/2"
+                className="absolute -translate-x-1/2 -translate-y-1/2 z-0"
                 style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
               >
-                <PlayerSeat
-                  player={player || null}
-                  seatIndex={i}
-                  isMe={player?.id === myPlayerId}
-                  isHost={player?.isHost || false}
-                  onUpdateNickname={(nickname) => send({ type: 'updateNickname', nickname })}
+                <img
+                  src="/assets/chair.svg"
+                  alt=""
+                  className="w-16 h-12 pointer-events-none"
+                  style={{ transform: `rotate(${pos.angle}deg)` }}
                 />
+                <div className="absolute inset-0 flex items-center justify-center z-20">
+                  <PlayerSeat
+                    player={player || null}
+                    seatIndex={i}
+                    isMe={player?.id === myPlayerId}
+                    isHost={player?.isHost || false}
+                    onUpdateNickname={(nickname) => send({ type: 'updateNickname', nickname })}
+                  />
+                </div>
               </div>
             )
           })}
