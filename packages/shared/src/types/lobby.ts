@@ -25,7 +25,7 @@ export interface GameSettings {
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
   gamemode: 'original',
-  isPublic: false,
+  isPublic: true,
   turnTimeLimit: 30,
   maxPlayers: 10,
   houseRules: {
