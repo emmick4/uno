@@ -125,6 +125,7 @@ const server = Bun.serve<ConnectionData>({
   },
 
   websocket: {
+    idleTimeout: 30, // seconds — Bun auto-pings; closes zombie connections faster than TCP keepalive
     open(ws) {
       roomManager.handleConnect(ws)
     },

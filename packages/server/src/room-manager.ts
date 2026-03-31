@@ -36,6 +36,7 @@ const MAX_GAME_DURATION_MS = 2 * 60 * 60_000 // 2 hr hard cap per game
 const LOBBY_TIMEOUT_MS = 15 * 60_000      // 15 min lobby without starting → close
 const EMPTY_ROOM_TIMEOUT_MS = 60_000      // 1 min with no connections → close room
 const REAP_INTERVAL_MS = 60_000           // check every 60s
+const DISCONNECT_GRACE_MS = 60_000        // 60s grace period before eliminating disconnected player
 
 interface RoomState {
   phase: 'lobby' | 'playing' | 'finished'
@@ -53,6 +54,7 @@ interface RoomState {
 class RoomManager {
   rooms = new Map<string, RoomState>()
   private reapTimer: ReturnType<typeof setInterval> | null = null
+  private disconnectTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
   constructor() {
     this.reapTimer = setInterval(() => this.reapStaleRooms(), REAP_INTERVAL_MS)
@@ -105,6 +107,13 @@ class RoomManager {
 
   private closeRoom(roomCode: string, room: RoomState) {
     if (room.turnTimer) clearTimeout(room.turnTimer)
+    // Clear all disconnect timers for this room
+    for (const [key, timer] of this.disconnectTimers) {
+      if (key.startsWith(`${roomCode}:`)) {
+        clearTimeout(timer)
+        this.disconnectTimers.delete(key)
+      }
+    }
     this.broadcast(room, { type: 'error', code: 'ROOM_CLOSED', message: 'Room closed due to inactivity' })
     const connCount = room.connections.size
     for (const conn of room.connections) {
@@ -112,6 +121,55 @@ class RoomManager {
     }
     const deleted = this.rooms.delete(roomCode)
     console.log(`closeRoom ${roomCode}: connections=${connCount}, deleted=${deleted}, remaining=${this.rooms.size}`)
+  }
+
+  private cancelDisconnectTimer(roomCode: string, playerId: string) {
+    const key = `${roomCode}:${playerId}`
+    const timer = this.disconnectTimers.get(key)
+    if (timer) {
+      clearTimeout(timer)
+      this.disconnectTimers.delete(key)
+    }
+  }
+
+  private startDisconnectTimer(roomCode: string, playerId: string) {
+    this.cancelDisconnectTimer(roomCode, playerId)
+    const key = `${roomCode}:${playerId}`
+    const timer = setTimeout(() => {
+      this.disconnectTimers.delete(key)
+      this.eliminateDisconnectedPlayer(roomCode, playerId)
+    }, DISCONNECT_GRACE_MS)
+    this.disconnectTimers.set(key, timer)
+  }
+
+  private eliminateDisconnectedPlayer(roomCode: string, playerId: string) {
+    const room = this.rooms.get(roomCode)
+    if (!room) return
+
+    // Check if they reconnected in the meantime
+    for (const conn of room.connections) {
+      if (conn.data.playerId === playerId) return
+    }
+
+    if (room.phase === 'lobby') {
+      return // lobby disconnects are handled immediately in handleClose
+    } else if (room.gameState) {
+      const player = room.gameState.players.find((p) => p.id === playerId)
+      if (!player || player.isEliminated) return
+
+      player.isConnected = false
+      player.isEliminated = true
+
+      // If it was their turn, advance to the next player
+      const currentPlayer = room.gameState.players[room.gameState.currentPlayerIndex]
+      if (currentPlayer.id === playerId && room.gameState.phase === 'playing') {
+        const gamemode = getGamemode(room.gameState.gamemode)
+        handleTurnTimeout(room.gameState, gamemode)
+        this.resetTurnTimer(room)
+      }
+
+      this.broadcastGameState(room)
+    }
   }
 
   getOrCreateRoom(roomCode: string): RoomState {
@@ -140,6 +198,10 @@ class RoomManager {
     const room = this.getOrCreateRoom(roomCode)
     room.connections.add(ws)
     room.emptyAt = null
+
+    if (ws.data.playerId) {
+      this.cancelDisconnectTimer(roomCode, ws.data.playerId)
+    }
 
     if (room.phase === 'lobby') {
       this.sendTo(ws, { type: 'lobbyState', state: this.getLobbyPayload(roomCode, room) })
@@ -229,15 +291,28 @@ class RoomManager {
     if (room.phase === 'lobby') {
       const player = room.players.find((p) => p.id === playerId)
       if (player) {
-        player.isConnected = false
-        this.broadcastLobbyState(roomCode, room)
+        room.players = room.players.filter((p) => p.id !== playerId)
         this.broadcast(room, { type: 'playerLeft', playerId })
+
+        // Transfer host if needed
+        if (player.isHost && room.players.length > 0) {
+          room.players[0].isHost = true
+          room.hostId = room.players[0].id
+          for (const conn of room.connections) {
+            if (conn.data.playerId === room.players[0].id) {
+              conn.data.isHost = true
+            }
+          }
+        }
+
+        this.broadcastLobbyState(roomCode, room)
       }
     } else if (room.gameState) {
       const player = room.gameState.players.find((p) => p.id === playerId)
-      if (player) {
+      if (player && !player.isEliminated) {
         player.isConnected = false
         this.broadcastGameState(room)
+        if (playerId) this.startDisconnectTimer(roomCode, playerId)
       }
     }
 
@@ -260,6 +335,7 @@ class RoomManager {
     if (existingPlayerId) {
       const existing = room.players.find((p) => p.id === existingPlayerId)
       if (existing) {
+        this.cancelDisconnectTimer(roomCode, existingPlayerId)
         // Reclaim the seat — close any stale connection for this player
         for (const conn of room.connections) {
           if (conn !== ws && conn.data.playerId === existingPlayerId) {
