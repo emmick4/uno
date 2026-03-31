@@ -35,6 +35,24 @@ const SIZE_CLASSES = {
   lg: 'w-20 h-[120px] text-lg rounded-xl',
 }
 
+/** Set of card image filenames that exist in /assets/cards/original/ */
+const CARD_IMAGES = new Set([
+  ...['red', 'blue', 'green', 'yellow'].flatMap((color) => [
+    ...Array.from({ length: 10 }, (_, i) => `${i}-${color}`),
+    `skip-${color}`,
+    `reverse-${color}`,
+  ]),
+  'wild-wild',
+])
+
+function getCardImagePath(card: Card): string | null {
+  const key = `${card.value}-${card.color}`
+  if (CARD_IMAGES.has(key)) {
+    return `/assets/cards/original/${key}.png`
+  }
+  return null
+}
+
 export function CardComponent({
   card,
   onClick,
@@ -49,6 +67,7 @@ export function CardComponent({
 
   const colors = COLOR_MAP[card.color] || COLOR_MAP.wild
   const display = VALUE_DISPLAY[card.value] || card.value
+  const imagePath = getCardImagePath(card)
 
   return (
     <button
@@ -69,16 +88,27 @@ export function CardComponent({
         whileTap={isPlayable ? { scale: 0.95 } : undefined}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         className={`
-          ${SIZE_CLASSES[size]} ${colors.bg} border-2 ${colors.border} ${colors.text}
+          ${SIZE_CLASSES[size]} ${imagePath ? '' : colors.bg} border-2 ${colors.border} ${colors.text}
           flex flex-col items-center justify-center font-bold
-          select-none
+          select-none overflow-hidden
           ${isPlayable ? 'shadow-lg hover:shadow-white/20' : ''}
           ${!isPlayable && onClick ? 'opacity-60' : ''}
         `}
       >
-        <span className="text-[10px] self-start ml-1">{display}</span>
-        <span className={size === 'sm' ? 'text-lg' : 'text-2xl'}>{display}</span>
-        <span className="text-[10px] self-end mr-1 rotate-180">{display}</span>
+        {imagePath ? (
+          <img
+            src={imagePath}
+            alt={`${card.color} ${card.value}`}
+            className="w-full h-full object-contain"
+            draggable={false}
+          />
+        ) : (
+          <>
+            <span className="text-[10px] self-start ml-1">{display}</span>
+            <span className={size === 'sm' ? 'text-lg' : 'text-2xl'}>{display}</span>
+            <span className="text-[10px] self-end mr-1 rotate-180">{display}</span>
+          </>
+        )}
       </motion.div>
     </button>
   )
