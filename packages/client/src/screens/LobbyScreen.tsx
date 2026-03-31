@@ -135,7 +135,7 @@ export function LobbyScreen() {
                 style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
               >
                 <img
-                  src="/assets/chair.svg"
+                  src="/assets/chair.svg?v=2"
                   alt=""
                   className="w-16 h-12 pointer-events-none"
                   style={{ transform: `rotate(${pos.angle}deg)` }}
