@@ -75,7 +75,7 @@ export function LandingScreen() {
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             maxLength={20}
-            className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white text-center text-lg focus:outline-none focus:border-white"
+            className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white text-center text-lg focus:outline-none focus:border-white"
           />
           {!nickname && (
             <img
@@ -102,22 +102,22 @@ export function LandingScreen() {
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               maxLength={5}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white text-center uppercase tracking-widest focus:outline-none focus:border-white"
+              className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white text-center uppercase tracking-widest focus:outline-none focus:border-white"
             />
             {!joinCode && (
               <img
                 src="/assets/room-code.svg"
                 alt="Room code"
-                className="absolute inset-0 m-auto h-5 pointer-events-none"
+                className="absolute inset-0 m-auto h-7 pointer-events-none"
               />
             )}
           </div>
           <button
             onClick={handleJoin}
             disabled={!nickname.trim() || !joinCode.trim()}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer"
+            className="px-4 py-3 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 cursor-pointer"
           >
-            <img src="/assets/join.svg" alt="Join" className="h-6" />
+            <img src="/assets/join.svg" alt="Join" className="h-7" />
           </button>
         </div>
       </div>
