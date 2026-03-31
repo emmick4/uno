@@ -41,10 +41,10 @@ export function useGameSocket(roomCode: string | undefined) {
         }
       })
 
-      socket.addEventListener('close', () => {
+      socket.addEventListener('close', (event) => {
         setConnected(false)
-        // Auto-reconnect after 2 seconds
-        if (!closed) {
+        // Don't reconnect if server explicitly closed the room (code 4000)
+        if (!closed && event.code !== 4000) {
           reconnectTimer.current = setTimeout(connect, 2000)
         }
       })

@@ -106,7 +106,7 @@ class RoomManager {
     if (room.turnTimer) clearTimeout(room.turnTimer)
     this.broadcast(room, { type: 'error', code: 'ROOM_CLOSED', message: 'Room closed due to inactivity' })
     for (const conn of room.connections) {
-      try { conn.close() } catch {}
+      try { conn.close(4000, 'Room closed') } catch {}
     }
     this.rooms.delete(roomCode)
   }
