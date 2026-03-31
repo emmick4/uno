@@ -19,11 +19,7 @@ export function PlayerSeat({ player, isMe, isHost, onUpdateNickname }: PlayerSea
   }, [editing])
 
   if (!player) {
-    return (
-      <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-700 flex items-center justify-center">
-        <div className="w-3 h-3 rounded-full bg-gray-800" />
-      </div>
-    )
+    return null
   }
 
   const startEditing = () => {

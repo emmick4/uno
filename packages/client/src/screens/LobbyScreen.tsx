@@ -7,16 +7,23 @@ import { PlayerSeat } from '../components/lobby/PlayerSeat'
 import { SettingsPanel } from '../components/lobby/SettingsPanel'
 import { MAX_PLAYERS } from '@uno/shared'
 
-/** Seat positions around an oval (in %, relative to container) */
+const TABLE_RX = 50 // horizontal radius (%)
+const TABLE_RY = 47 // vertical radius (%)
+const CHAIR_OFFSET = 8 // how far chairs sit outside the table edge (%)
+
+/** Seat positions around the table, evenly spaced for the given player count */
 function getSeatPositions(count: number): Array<{ x: number; y: number; angle: number }> {
   const positions: Array<{ x: number; y: number; angle: number }> = []
   for (let i = 0; i < count; i++) {
     // Start from bottom center, go clockwise
-    const angle = (Math.PI / 2) + (2 * Math.PI * i) / count
-    const x = 50 + 45 * Math.cos(angle)
-    const y = 50 + 42 * Math.sin(angle)
-    // Rotation so the chair faces inward (toward center) — angle in degrees, +90 so seat faces table
-    const rotation = (angle * 180 / Math.PI) + 90
+    const theta = (Math.PI / 2) + (2 * Math.PI * i) / count
+    // Place chairs outside the table edge
+    const x = 50 + (TABLE_RX + CHAIR_OFFSET) * Math.cos(theta)
+    const y = 50 + (TABLE_RY + CHAIR_OFFSET) * Math.sin(theta)
+    // Normal to the ellipse surface — this is the direction perpendicular to the table edge
+    const normalAngle = Math.atan2(TABLE_RX * Math.sin(theta), TABLE_RY * Math.cos(theta))
+    // Chair rotation: faces the table edge (seat toward table, back outward)
+    const rotation = (normalAngle * 180 / Math.PI) + 90
     positions.push({ x, y, angle: rotation })
   }
   return positions
@@ -64,7 +71,7 @@ export function LobbyScreen() {
 
   const players = lobby?.players || []
   const settings = lobby?.settings
-  const seatPositions = getSeatPositions(settings?.maxPlayers || MAX_PLAYERS)
+  const seatPositions = getSeatPositions(players.length || 1)
   const amHost = lobby?.hostId === myPlayerId
 
   const handleStart = () => {
@@ -118,11 +125,12 @@ export function LobbyScreen() {
             className="absolute inset-[20px] w-[calc(100%-40px)] h-[calc(100%-40px)] object-contain z-10 pointer-events-none"
           />
 
-          {seatPositions.map((pos, i) => {
-            const player = players.find((p) => p.seatIndex === i)
+          {players.map((player, i) => {
+            const pos = seatPositions[i]
+            if (!pos) return null
             return (
               <div
-                key={i}
+                key={player.id}
                 className="absolute -translate-x-1/2 -translate-y-1/2 z-0"
                 style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
               >
@@ -134,10 +142,10 @@ export function LobbyScreen() {
                 />
                 <div className="absolute inset-0 flex items-center justify-center z-20">
                   <PlayerSeat
-                    player={player || null}
+                    player={player}
                     seatIndex={i}
-                    isMe={player?.id === myPlayerId}
-                    isHost={player?.isHost || false}
+                    isMe={player.id === myPlayerId}
+                    isHost={player.isHost || false}
                     onUpdateNickname={(nickname) => send({ type: 'updateNickname', nickname })}
                   />
                 </div>
