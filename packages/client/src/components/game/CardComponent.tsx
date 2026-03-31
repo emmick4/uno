@@ -88,7 +88,7 @@ export function CardComponent({
         whileTap={isPlayable ? { scale: 0.95 } : undefined}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         className={`
-          ${SIZE_CLASSES[size]} ${imagePath ? '' : colors.bg} border-2 ${colors.border} ${colors.text}
+          ${SIZE_CLASSES[size]} ${imagePath ? '' : `${colors.bg} border-2 ${colors.border}`} ${colors.text}
           flex flex-col items-center justify-center font-bold
           select-none overflow-hidden
           ${isPlayable ? 'shadow-lg hover:shadow-white/20' : ''}
