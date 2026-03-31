@@ -40,12 +40,7 @@ export function LandingScreen() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-8 p-8">
-      <h1 className="text-6xl font-bold tracking-tight">
-        <span className="text-red-500">U</span>
-        <span className="text-yellow-400">N</span>
-        <span className="text-green-500">O</span>
-      </h1>
-      <p className="text-lg text-gray-400">Online Multiplayer Card Game</p>
+      <img src="/assets/uno-title.svg" alt="UNO!" className="h-24" />
 
       {/* Gamemode Carousel */}
       <div className="flex gap-6 my-8">
@@ -53,14 +48,14 @@ export function LandingScreen() {
           <button
             key={gm.id}
             onClick={() => gm.available && setSelectedGamemode(gm.id)}
-            className={`w-48 h-72 cursor-pointer transition-all duration-200 ${
-              selectedGamemode === gm.id ? 'scale-105 hover:scale-110' : 'hover:scale-105'
+            className={`w-48 h-72 cursor-pointer transition-all duration-200 hover:scale-105 ${
+              selectedGamemode === gm.id ? 'scale-105' : ''
             } ${!gm.available ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <img
               src={gm.card}
               alt={gm.name}
-              className="w-full h-full object-contain"
+              className="w-full h-full"
             />
             {!gm.available && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-xs text-gray-400">
