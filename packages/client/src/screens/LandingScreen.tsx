@@ -68,38 +68,56 @@ export function LandingScreen() {
 
       {/* Nickname + Actions */}
       <div className="flex flex-col gap-4 w-full max-w-sm">
-        <input
-          type="text"
-          placeholder="Your nickname"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-          maxLength={20}
-          className="px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white text-center text-lg focus:outline-none focus:border-white"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            placeholder=""
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            maxLength={20}
+            className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white text-center text-lg focus:outline-none focus:border-white"
+          />
+          {!nickname && (
+            <img
+              src="/assets/nickname.svg"
+              alt="Nickname"
+              className="absolute inset-0 m-auto h-6 pointer-events-none"
+            />
+          )}
+        </div>
 
         <button
           onClick={handleCreate}
           disabled={!nickname.trim()}
-          className="px-6 py-3 bg-red-600 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold text-lg transition-colors"
+          className="disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 cursor-pointer"
         >
-          Create Game
+          <img src="/assets/create-game.svg" alt="Create Game" className="w-full h-14 rounded-lg" />
         </button>
 
         <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Room code"
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            maxLength={5}
-            className="flex-1 px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white text-center uppercase tracking-widest focus:outline-none focus:border-white"
-          />
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder=""
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              maxLength={5}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white text-center uppercase tracking-widest focus:outline-none focus:border-white"
+            />
+            {!joinCode && (
+              <img
+                src="/assets/room-code.svg"
+                alt="Room code"
+                className="absolute inset-0 m-auto h-5 pointer-events-none"
+              />
+            )}
+          </div>
           <button
             onClick={handleJoin}
             disabled={!nickname.trim() || !joinCode.trim()}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors"
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer"
           >
-            Join
+            <img src="/assets/join.svg" alt="Join" className="h-6" />
           </button>
         </div>
       </div>
