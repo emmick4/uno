@@ -60,12 +60,12 @@ export function PlayerSeat({ player, isMe, isHost, onUpdateNickname }: PlayerSea
             if (e.key === 'Enter') commitEdit()
             if (e.key === 'Escape') setEditing(false)
           }}
-          className="text-xs text-center w-[80px] bg-gray-700 border border-yellow-400 rounded px-1 py-0.5 outline-none"
+          className="text-base text-center w-[120px] bg-gray-700 border border-yellow-400 rounded px-1 py-0.5 outline-none"
           maxLength={20}
         />
       ) : (
         <div
-          className={`text-xs text-center max-w-[80px] truncate ${isMe ? 'cursor-pointer hover:underline' : ''}`}
+          className={`text-base text-center max-w-[120px] truncate ${isMe ? 'cursor-pointer hover:underline' : ''}`}
           style={{ fontFamily: 'UnoHandwritten, sans-serif' }}
           onClick={startEditing}
         >
@@ -74,7 +74,7 @@ export function PlayerSeat({ player, isMe, isHost, onUpdateNickname }: PlayerSea
         </div>
       )}
       {isHost && (
-        <div className="text-[10px] text-yellow-500 uppercase tracking-wider">Host</div>
+        <div className="text-xs text-yellow-500 uppercase tracking-wider">Host</div>
       )}
     </div>
   )
