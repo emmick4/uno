@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+@theme {
+  --font-sans: 'UnoHandwritten', system-ui, -apple-system, sans-serif;
+}
+
 @font-face {
   font-family: 'UnoHandwritten';
   src: url('/assets/fonts/handwritten.woff2') format('woff2');
