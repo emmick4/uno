@@ -75,6 +75,13 @@ Messages between client and server are JSON with a `type` field. All types are d
 
 The client should handle events for animations FIRST, then apply the subsequent state update.
 
+## Connection & Disconnect Behavior
+- **Heartbeat:** Bun WebSocket `idleTimeout` is 30s — zombie TCP connections (ethernet unplug, laptop lid close) are detected and closed within ~30s.
+- **Client auto-reconnect:** On WebSocket close, the client retries every 2s (see `useGameSocket.ts`). Reconnecting players reclaim their seat via `playerId` stored in `sessionStorage`.
+- **Lobby disconnect:** Instant removal — closing the tab drops the player immediately. Host transfers to the next player.
+- **In-game disconnect:** 60s grace period. If the player reconnects, the timer cancels and they resume. If not, they're eliminated and the turn advances (via `handleTurnTimeout`).
+- **Room reaping:** Stale rooms are cleaned up by a 60s interval — empty rooms after 1 min, idle after 30 min, lobby after 15 min, games after 2 hours.
+
 ## Adding a New Gamemode
 1. Create `packages/gamemodes/src/your-gamemode/` with: `index.ts`, `deck.ts`, `rules.ts`
 2. Implement the `GamemodePlugin` interface (see `packages/shared/src/types/gamemode.ts`)
