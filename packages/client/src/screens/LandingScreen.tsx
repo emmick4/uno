@@ -53,8 +53,8 @@ export function LandingScreen() {
           <button
             key={gm.id}
             onClick={() => gm.available && setSelectedGamemode(gm.id)}
-            className={`w-48 h-72 cursor-pointer transition-all duration-200 hover:scale-105 ${
-              selectedGamemode === gm.id ? 'scale-105' : ''
+            className={`w-48 h-72 cursor-pointer transition-all duration-200 ${
+              selectedGamemode === gm.id ? 'scale-105 hover:scale-110' : 'hover:scale-105'
             } ${!gm.available ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <img
