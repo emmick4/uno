@@ -34,6 +34,7 @@ export interface ConnectionData {
 const IDLE_TIMEOUT_MS = 30 * 60_000       // 30 min no messages → close room
 const MAX_GAME_DURATION_MS = 2 * 60 * 60_000 // 2 hr hard cap per game
 const LOBBY_TIMEOUT_MS = 15 * 60_000      // 15 min lobby without starting → close
+const EMPTY_ROOM_TIMEOUT_MS = 60_000      // 1 min with no connections → close room
 const REAP_INTERVAL_MS = 60_000           // check every 60s
 
 interface RoomState {
@@ -46,6 +47,7 @@ interface RoomState {
   turnTimer: ReturnType<typeof setTimeout> | null
   lastActivityAt: number
   createdAt: number
+  emptyAt: number | null  // timestamp when last connection left, null if connections exist
 }
 
 class RoomManager {
@@ -83,7 +85,9 @@ class RoomManager {
     for (const [roomCode, room] of this.rooms) {
       let reason: string | null = null
 
-      if (now - room.lastActivityAt > IDLE_TIMEOUT_MS) {
+      if (room.emptyAt && now - room.emptyAt > EMPTY_ROOM_TIMEOUT_MS) {
+        reason = 'empty room'
+      } else if (now - room.lastActivityAt > IDLE_TIMEOUT_MS) {
         reason = 'idle timeout'
       } else if (room.phase === 'lobby' && now - room.createdAt > LOBBY_TIMEOUT_MS) {
         reason = 'lobby timeout'
@@ -121,6 +125,7 @@ class RoomManager {
         turnTimer: null,
         lastActivityAt: now,
         createdAt: now,
+        emptyAt: null,
       }
       this.rooms.set(roomCode, room)
     }
@@ -131,6 +136,7 @@ class RoomManager {
     const { roomCode } = ws.data
     const room = this.getOrCreateRoom(roomCode)
     room.connections.add(ws)
+    room.emptyAt = null
 
     if (room.phase === 'lobby') {
       this.sendTo(ws, { type: 'lobbyState', state: this.getLobbyPayload(roomCode, room) })
@@ -232,15 +238,9 @@ class RoomManager {
       }
     }
 
-    // Clean up empty rooms after a delay
+    // Track when room became empty — reaper will clean it up
     if (room.connections.size === 0) {
-      setTimeout(() => {
-        const r = this.rooms.get(roomCode)
-        if (r && r.connections.size === 0) {
-          if (r.turnTimer) clearTimeout(r.turnTimer)
-          this.rooms.delete(roomCode)
-        }
-      }, 60_000)
+      room.emptyAt = Date.now()
     }
   }
 
