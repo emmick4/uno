@@ -17,7 +17,7 @@ const server = Bun.serve<ConnectionData>({
 
     // Matchmaking API — list public games
     if (url.pathname === '/api/public-games') {
-      return new Response(JSON.stringify({ games: [] }), {
+      return new Response(JSON.stringify({ games: roomManager.getPublicGames() }), {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',

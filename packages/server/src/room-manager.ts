@@ -56,6 +56,28 @@ class RoomManager {
     this.reapTimer = setInterval(() => this.reapStaleRooms(), REAP_INTERVAL_MS)
   }
 
+  getPublicGames() {
+    const games: Array<{
+      roomCode: string
+      hostNickname: string
+      gamemode: string
+      playerCount: number
+      maxPlayers: number
+    }> = []
+    for (const [roomCode, room] of this.rooms) {
+      if (room.phase !== 'lobby' || !room.settings.isPublic) continue
+      const host = room.players.find((p) => p.isHost)
+      games.push({
+        roomCode,
+        hostNickname: host?.nickname || 'Unknown',
+        gamemode: room.settings.gamemode,
+        playerCount: room.players.length,
+        maxPlayers: room.settings.maxPlayers,
+      })
+    }
+    return games
+  }
+
   private reapStaleRooms() {
     const now = Date.now()
     for (const [roomCode, room] of this.rooms) {
