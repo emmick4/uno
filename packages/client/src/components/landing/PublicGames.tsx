@@ -74,7 +74,7 @@ export function PublicGames() {
             className="flex items-center justify-between bg-gray-800/50 rounded-lg px-4 py-3 border border-gray-700"
           >
             <div>
-              <div className="text-base font-medium" style={{ fontFamily: 'UnoHandwritten, sans-serif' }}>
+              <div className="text-base font-medium">
                 {game.hostNickname}&apos;s game
               </div>
               <div className="text-sm text-gray-500">

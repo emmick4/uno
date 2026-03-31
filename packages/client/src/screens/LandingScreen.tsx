@@ -76,7 +76,6 @@ export function LandingScreen() {
             onChange={(e) => setNickname(e.target.value)}
             maxLength={20}
             className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white text-center text-2xl focus:outline-none focus:border-white"
-            style={{ fontFamily: 'UnoHandwritten, sans-serif' }}
           />
           {!nickname && (
             <img
@@ -104,7 +103,6 @@ export function LandingScreen() {
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               maxLength={5}
               className="w-full px-4 py-3 bg-transparent border-b border-gray-600 text-white text-center uppercase tracking-widest focus:outline-none focus:border-white"
-              style={{ fontFamily: 'UnoHandwritten, sans-serif' }}
             />
             {!joinCode && (
               <img

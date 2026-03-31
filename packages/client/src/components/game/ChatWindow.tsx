@@ -50,7 +50,7 @@ export function ChatWindow({ onSend }: ChatWindowProps) {
                 <span className="font-semibold text-xs">
                   {msg.playerId === myPlayerId ? 'You' : msg.nickname}:
                 </span>{' '}
-                <span className="text-gray-300 text-xs" style={{ fontFamily: 'UnoHandwritten, sans-serif' }}>{msg.text}</span>
+                <span className="text-gray-300 text-xs">{msg.text}</span>
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -67,7 +67,6 @@ export function ChatWindow({ onSend }: ChatWindowProps) {
                 placeholder="Type a message..."
                 maxLength={200}
                 className="flex-1 px-2 py-1.5 bg-gray-900 border border-gray-700 rounded text-xs focus:outline-none focus:border-gray-500"
-                style={{ fontFamily: 'UnoHandwritten, sans-serif' }}
               />
               <button
                 onClick={handleSend}
