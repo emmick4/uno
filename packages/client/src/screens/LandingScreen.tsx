@@ -60,7 +60,7 @@ export function LandingScreen() {
             <img
               src={gm.card}
               alt={gm.name}
-              className="w-full h-full"
+              className="w-full h-full object-contain"
             />
             {!gm.available && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-xs text-gray-400">
