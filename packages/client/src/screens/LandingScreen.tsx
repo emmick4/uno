@@ -34,8 +34,8 @@ export function LandingScreen() {
   }
 
   const gamemodes = [
-    { id: 'original', name: 'Original', icon: '\u{1F0CF}', available: true },
-    { id: 'harry-potter', name: 'Harry Potter', icon: '\u26A1', available: true },
+    { id: 'original', name: 'Original', card: '/assets/cards/landing-original.svg', available: true },
+    { id: 'harry-potter', name: 'Harry Potter', card: '/assets/cards/landing-harrypotter.svg', available: true },
   ]
 
   return (
@@ -53,19 +53,22 @@ export function LandingScreen() {
           <button
             key={gm.id}
             onClick={() => gm.available && setSelectedGamemode(gm.id)}
-            className={`w-48 h-72 bg-gray-800 rounded-xl border-2 flex items-center justify-center cursor-pointer transition-all ${
+            className={`w-48 h-72 rounded-xl border-2 overflow-hidden cursor-pointer transition-all ${
               selectedGamemode === gm.id
-                ? 'border-white scale-105'
+                ? 'border-white scale-105 shadow-lg shadow-white/10'
                 : 'border-gray-600 hover:border-gray-400'
             } ${!gm.available ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <div className="text-center">
-              <div className="text-4xl mb-2">{gm.icon}</div>
-              <div className="font-semibold">{gm.name}</div>
-              {!gm.available && (
-                <div className="text-xs text-gray-500 mt-1">Coming Soon</div>
-              )}
-            </div>
+            <img
+              src={gm.card}
+              alt={gm.name}
+              className="w-full h-full object-cover"
+            />
+            {!gm.available && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-xs text-gray-400">
+                Coming Soon
+              </div>
+            )}
           </button>
         ))}
       </div>
