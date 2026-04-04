@@ -1,22 +1,14 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-sans: 'UnoHandwritten', system-ui, -apple-system, sans-serif;
-}
-
-@font-face {
-  font-family: 'UnoHandwritten';
-  src: url('/assets/fonts/handwritten.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
   margin: 0;
   background: #1a1a2e;
   color: #e0e0e0;
-  font-family: 'UnoHandwritten', system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
 }
 
