@@ -38,6 +38,13 @@ spec:
                 secretKeyRef:
                   name: deploy-webhook-token
                   key: token
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
           readinessProbe:
             httpGet:
               path: /health
